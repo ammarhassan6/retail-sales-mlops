@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "n_rows": 913000,
+  "n_stores": 10,
+  "n_items": 50,
+  "date_min": "2013-01-01 00:00:00",
+  "date_max": "2017-12-31 00:00:00",
+  "missing_values": 0,
+  "errors": []
+}
