@@ -1,0 +1,7 @@
+# Everything in requirements.txt + tools used only during development / CI
+-r requirements.txt
+pytest==8.3.5
+ruff==0.11.8
+dvc[s3]==3.59.2
+pathspec==0.12.1   # dvc 3.59 crashes with pathspec 1.x, so we pin it
+dagshub==0.5.9

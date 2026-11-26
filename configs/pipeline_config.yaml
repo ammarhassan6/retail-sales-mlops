@@ -1,0 +1,50 @@
+# ------------------------------------------------------------------
+# Pipeline configuration (paths, splits, quality gate, inventory)
+# Every script reads its settings from here, so nothing is hard-coded.
+# ------------------------------------------------------------------
+
+project:
+  name: retail-sales-forecasting
+  random_seed: 42
+
+data:
+  # "local" = read raw_path from disk, "s3" = download from the S3 bucket below
+  source: local
+  raw_path: data/raw/train.csv          # Kaggle "Store Item Demand Forecasting" train.csv
+  s3_bucket: ""                          # e.g. my-retail-mlops-bucket (filled in later)
+  s3_key: raw/train.csv
+  interim_path: data/interim/sales.parquet
+  validated_path: data/interim/validated.parquet
+  processed_dir: data/processed
+
+split:
+  # Time-based split: the LAST days are used for testing (never shuffle time series!)
+  test_days: 90
+  val_days: 90
+
+reports:
+  validation_report: reports/validation_report.json
+  metrics_file: reports/metrics.json
+  plot_file: reports/pred_vs_actual.png
+
+model:
+  model_path: models/model.joblib
+  metadata_path: models/metadata.json
+
+mlflow:
+  # If the MLFLOW_TRACKING_URI environment variable is set (e.g. DagsHub), it wins.
+  local_tracking_uri: sqlite:///mlflow.db
+  experiment_name: retail-sales-forecasting
+  registered_model_name: retail-sales-forecaster
+  register_model: true
+
+quality_gate:
+  # A model is only "approved" if BOTH rules pass:
+  # 1) test SMAPE (%) must be at or below this value
+  # 2) it must beat the naive baseline (predict = average of last 7 days)
+  max_smape: 20.0
+  must_beat_baseline: true
+
+inventory:
+  service_level: 0.95      # 95% chance of NOT running out of stock
+  default_lead_time_days: 7

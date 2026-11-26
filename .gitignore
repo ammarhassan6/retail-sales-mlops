@@ -1,0 +1,37 @@
+# ---------- Private notes / assistant files (never push) ----------
+CLAUDE.md
+.claude/
+_private/
+
+# ---------- Python ----------
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# ---------- Secrets ----------
+.env
+*.pem
+*credentials*
+
+# ---------- Data & models (tracked by DVC, not Git) ----------
+/data/raw/*
+!/data/raw/.gitkeep
+!/data/raw/*.dvc
+!/data/raw/.gitignore
+/data/interim
+/data/processed
+/models/model.joblib
+
+# ---------- MLflow local files ----------
+mlruns/
+mlflow.db
+mlartifacts/
+
+# ---------- IDE / OS ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
