@@ -1,0 +1,53 @@
+# ------------------------------------------------------------------
+# Docker image for the Flask REST API (serving only, no training).
+#
+# Build (from the project root):
+#   docker build -f docker/Dockerfile.api --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) -t retail-sales-api .
+# Run:
+#   docker run -d -p 8000:8000 --name retail-api retail-sales-api
+# ------------------------------------------------------------------
+
+# Small official Python image (Debian "slim" = no compilers/extra tools)
+FROM python:3.12-slim
+
+# Don't write .pyc files; print logs immediately (needed for `docker logs` / CloudWatch)
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# 1) Dependencies first: Docker caches this layer, so changing our code
+#    does not reinstall all the libraries on every build.
+COPY requirements-api.txt .
+RUN pip install --no-cache-dir -r requirements-api.txt
+
+# 2) Only what the API needs: code, configs and the model artifacts.
+#    No raw/training data, no .env, no .dvc cache (see .dockerignore).
+COPY src/ src/
+COPY configs/ configs/
+COPY models/model.joblib models/metadata.json models/
+COPY reports/metrics.json reports/
+COPY data/processed/latest_store_item_stats.parquet data/processed/
+
+# Code version shown by /model-info. There is no .git folder inside the image,
+# so src/utils/versioning.py reads it from this environment variable.
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT} \
+    APP_ENV=production \
+    LOG_LEVEL=INFO
+
+# Run as a normal user, not root: if someone breaks into the app,
+# they cannot change system files inside the container.
+RUN useradd --create-home --uid 1000 appuser
+USER appuser
+
+EXPOSE 8000
+
+# Docker marks the container "unhealthy" if /health stops answering 200.
+# (python is used because the slim image has no curl)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)" || exit 1
+
+# gunicorn = production web server (Flask's built-in server is for development only).
+# 2 worker processes -> two requests can be handled at the same time.
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60", "--access-logfile", "-", "src.api.wsgi:app"]

@@ -15,6 +15,7 @@ Run:  python -m src.api.app        -> http://127.0.0.1:8000
 """
 
 import json
+import os
 
 import joblib
 import pandas as pd
@@ -26,6 +27,7 @@ from src.features.preprocessing import FEATURE_COLUMNS, build_inference_frame
 from src.inventory.optimizer import recommend_order
 from src.utils.config import load_config, project_path
 from src.utils.logger import get_logger
+from src.utils.versioning import git_commit
 
 logger = get_logger(__name__)
 
@@ -67,9 +69,17 @@ def model_version(artifacts: dict) -> str:
     return str(artifacts["metrics"].get("registered_version", "unknown"))
 
 
-def is_known_store_item(stats: pd.DataFrame, store: int, item: int) -> bool:
+def get_history_features(artifacts: dict, store: int, item: int) -> pd.DataFrame:
+    """History features (sales_mean_7d, sales_mean_28d, sales_std_28d) for ONE store-item.
+
+    This is the ONLY place the API looks up history features. Later it will read
+    them from the Feast online store and fall back to the parquet snapshot if
+    Feast is not available - nothing else in the API has to change.
+    Returns an empty table when the store-item is unknown.
+    """
+    stats = artifacts["stats"]
     match = (stats["store"] == store) & (stats["item"] == item)
-    return bool(match.any())
+    return stats[match]
 
 
 def build_model_info(artifacts: dict) -> dict:
@@ -94,13 +104,13 @@ def build_model_info(artifacts: dict) -> dict:
     }
 
 
-def make_prediction(params: dict, artifacts: dict, service_level: float) -> dict:
+def make_prediction(params: dict, history: pd.DataFrame, artifacts: dict, service_level: float) -> dict:
     """Forecast every day of the horizon, then turn it into a reorder decision."""
     dates = pd.date_range(params["start_date"], periods=params["horizon_days"], freq="D")
     requests_df = pd.DataFrame({"store": params["store"], "item": params["item"], "date": dates})
 
     # Same feature code as training -> same columns, same order
-    features = build_inference_frame(requests_df, artifacts["stats"])[FEATURE_COLUMNS]
+    features = build_inference_frame(requests_df, history)[FEATURE_COLUMNS]
     # Sales can never be negative, so clip small negative model outputs to 0
     predictions = artifacts["model"].predict(features).clip(min=0)
 
@@ -133,6 +143,8 @@ def create_app(artifacts: dict | None) -> Flask:
     inventory_cfg = load_config()["inventory"]
     # Bodies larger than this get "413 Request Entity Too Large"
     app.config["MAX_CONTENT_LENGTH"] = api_cfg["max_request_bytes"]
+    # Which CODE is serving (inside Docker: GIT_COMMIT build arg) and in which environment
+    serving_info = {"api_git_commit": git_commit(), "app_env": os.getenv("APP_ENV", "development")}
 
     @app.get("/health")
     def health():
@@ -144,7 +156,9 @@ def create_app(artifacts: dict | None) -> Flask:
     def model_info():
         if artifacts is None:
             return error_response("model is not loaded", 503)
-        return jsonify(build_model_info(artifacts)), 200
+        info = build_model_info(artifacts)
+        info.update(serving_info)
+        return jsonify(info), 200
 
     @app.post("/predict")
     def predict():
@@ -164,10 +178,11 @@ def create_app(artifacts: dict | None) -> Flask:
         )
         if error:
             return error_response(error, 400)
-        if not is_known_store_item(artifacts["stats"], params["store"], params["item"]):
+        history = get_history_features(artifacts, params["store"], params["item"])
+        if history.empty:
             return error_response(f"unknown store/item combination: {params['store']}/{params['item']}", 400)
 
-        result = make_prediction(params, artifacts, inventory_cfg["service_level"])
+        result = make_prediction(params, history, artifacts, inventory_cfg["service_level"])
         logger.info("Prediction store=%s item=%s days=%s reorder=%s", params["store"], params["item"],
                     params["horizon_days"], result["inventory"]["should_reorder"])
         return jsonify(result), 200

@@ -8,9 +8,15 @@ Flask's test_client() sends requests without starting a real web server.
 import pandas as pd
 import pytest
 
-from src.api.app import create_app
+from src.api.app import create_app, get_history_features
 from src.data.sample_data import generate_sample_sales
-from src.features.preprocessing import FEATURE_COLUMNS, TARGET, build_features, latest_store_item_stats
+from src.features.preprocessing import (
+    FEATURE_COLUMNS,
+    HISTORY_COLUMNS,
+    TARGET,
+    build_features,
+    latest_store_item_stats,
+)
 from src.models.tune import build_model
 
 
@@ -60,6 +66,24 @@ def test_model_info(client):
     assert info["model_type"] == "hist_gradient_boosting"
     assert info["history_as_of_date"] == "2017-02-04"
     assert info["store_item_count"] == 6
+
+
+def test_model_info_shows_serving_version(artifacts, monkeypatch):
+    # Inside Docker these come from the GIT_COMMIT build arg and APP_ENV
+    monkeypatch.setenv("GIT_COMMIT", "abc1234")
+    monkeypatch.setenv("APP_ENV", "production")
+    info = create_app(artifacts).test_client().get("/model-info").get_json()
+    assert info["api_git_commit"] == "abc1234"
+    assert info["app_env"] == "production"
+
+
+def test_history_feature_lookup(artifacts):
+    known = get_history_features(artifacts, store=1, item=2)
+    unknown = get_history_features(artifacts, store=99, item=2)
+    assert len(known) == 1
+    for column in HISTORY_COLUMNS:
+        assert column in known.columns
+    assert unknown.empty
 
 
 def test_not_ready_when_model_missing():
