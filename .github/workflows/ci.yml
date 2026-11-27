@@ -1,0 +1,146 @@
+# ------------------------------------------------------------------
+# CI pipeline (GitHub Actions) - runs on every pull request and every push to main.
+#
+# Quality gates (a failing step = red X on the PR = cannot merge):
+#   1. lint      - ruff code style / errors
+#   2. test      - all pytest tests (data, features, model, Feast, API)
+#   3. security  - bandit (our code) + pip-audit (libraries shipped in the image)
+#   4. docker    - only if 1-3 pass: build the API image, start it, call /health and
+#                  /predict (smoke test), scan the image with Trivy
+#
+# Secrets: DAGSHUB_TOKEN is a GitHub Secret (Settings -> Secrets -> Actions),
+# never written in this file. GitHub hides it in the logs.
+# ------------------------------------------------------------------
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege: the workflow can only READ the repository
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  FEAST_USAGE: "False"          # Feast: don't send anonymous usage statistics
+  LOKY_MAX_CPU_COUNT: "2"       # hides a harmless joblib warning
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install ruff (same version as requirements-dev.txt)
+        run: pip install ruff==0.11.8
+      - name: Run ruff
+        run: ruff check .
+
+  test:
+    name: Tests (pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip                               # reuse downloaded packages between runs
+          cache-dependency-path: requirements*.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Check installed packages are compatible
+        run: pip check
+      - name: Run all tests (sample data only - no real data or tokens needed)
+        run: python -m pytest -v
+
+  security:
+    name: Security scans (bandit + pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install scanners
+        run: pip install bandit==1.8.3 pip-audit==2.9.0
+      - name: Bandit - security problems in OUR code (fails on medium/high)
+        run: bandit -r src feature_store -ll
+      - name: pip-audit - libraries inside the Docker image (fails on any known vulnerability)
+        # One documented exception - reason in .trivyignore (pyarrow, Python not affected)
+        run: pip-audit -r requirements-api.txt --ignore-vuln PYSEC-2026-113
+      - name: pip-audit - all training/dev libraries (report only, does not block)
+        # MLflow 2.22 pins old dependencies; upgrading blindly can break the pipeline.
+        # This report is reviewed and documented in the risk assessment instead.
+        continue-on-error: true
+        run: |
+          pip install -r requirements-dev.txt
+          pip-audit --format markdown --output pip-audit-full.md
+      - name: Show full report on the run's summary page
+        if: always()
+        run: |
+          echo "## pip-audit - all training/dev libraries" >> "$GITHUB_STEP_SUMMARY"
+          cat pip-audit-full.md >> "$GITHUB_STEP_SUMMARY" || echo "no report" >> "$GITHUB_STEP_SUMMARY"
+
+  docker:
+    name: Docker build + smoke test + Trivy scan
+    needs: [lint, test, security]   # only build an image from code that passed every check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install DVC (only what is needed to download the model)
+        run: pip install "dvc[s3]==3.59.2" pathspec==0.12.1
+
+      - name: Download model artifacts from DagsHub
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          dvc remote modify origin --local access_key_id "$DAGSHUB_TOKEN"
+          dvc remote modify origin --local secret_access_key "$DAGSHUB_TOKEN"
+          dvc pull models/model.joblib data/processed/latest_store_item_stats.parquet
+
+      - name: Build the API image
+        run: |
+          docker build -f docker/Dockerfile.api \
+            --build-arg GIT_COMMIT="${GITHUB_SHA::7}" \
+            -t retail-sales-api:ci .
+
+      - name: Smoke test - start the container, call /health and /predict
+        run: |
+          docker run -d -p 8000:8000 --name api retail-sales-api:ci
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/health && break
+            sleep 2
+          done
+          curl -sf http://localhost:8000/health
+          curl -sf -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"store": 1, "item": 1, "start_date": "2018-01-01", "horizon_days": 7, "current_stock": 120}'
+
+      - name: Container logs (only shown when a step failed)
+        if: failure()
+        run: docker logs api
+
+      - name: Trivy - fail on HIGH/CRITICAL vulnerabilities that have a fix
+        # .trivyignore lists the documented exceptions (each with a reason)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD/.trivyignore:/.trivyignore:ro" \
+            aquasec/trivy:0.67.2 image \
+            --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            --ignorefile /.trivyignore \
+            retail-sales-api:ci

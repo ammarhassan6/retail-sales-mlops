@@ -16,6 +16,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Install the latest Debian security fixes for the base image (found by Trivy),
+# then delete the package lists so the image stays small.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 # 1) Dependencies first: Docker caches this layer, so changing our code
 #    does not reinstall all the libraries on every build.
 COPY requirements-api.txt .

@@ -1,0 +1,8 @@
+# Vulnerabilities that Trivy may skip - every line needs a reason and a review date.
+# Review again when MLflow is upgraded (2.22 requires pyarrow < 20).
+
+# pyarrow 19.0.1 - Arrow C++ use-after-free when reading Arrow IPC *files* with
+# pre-buffering. Upstream advisory: "not exposed in language bindings (Python ...),
+# so these bindings are not vulnerable". We also only read our own Parquet file.
+# Fix (23.0.1) is blocked by mlflow==2.22.0 (pyarrow<20). Reviewed 2026-11-28.
+CVE-2026-25087
