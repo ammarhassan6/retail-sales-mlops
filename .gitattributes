@@ -1,0 +1,10 @@
+# Always use LF line endings for text files, on every OS.
+# Why: DVC fingerprints (md5) code files listed in dvc.yaml. If Windows converts
+# them to CRLF, the md5 changes and DVC thinks the code changed.
+* text=auto eol=lf
+
+# Binary files - never touch
+*.png binary
+*.joblib binary
+*.parquet binary
+*.pdf binary

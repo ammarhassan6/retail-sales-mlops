@@ -91,7 +91,7 @@ def main() -> None:
         "git_commit": code_version,
         "trained_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
-    project_path(cfg["model"]["metadata_path"]).write_text(json.dumps(metadata, indent=2))
+    project_path(cfg["model"]["metadata_path"]).write_text(json.dumps(metadata, indent=2), newline="\n")
     logger.info("Best model: %s (val SMAPE %.2f) saved to %s",
                 best["model_type"], best["val_metrics"]["smape"], model_path)
 

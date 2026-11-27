@@ -59,7 +59,7 @@ def main() -> None:
 
     report_path = project_path(cfg["reports"]["validation_report"])
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, indent=2))
+    report_path.write_text(json.dumps(report, indent=2), newline="\n")  # same file on Windows & Linux
 
     if not passed:
         logger.error("Data validation FAILED: %s", errors)
