@@ -90,7 +90,7 @@ def main() -> None:
     if passed and cfg["mlflow"]["register_model"]:
         result["registered_version"] = register_candidate(cfg, metadata["mlflow_run_id"])
 
-    project_path(cfg["reports"]["metrics_file"]).write_text(json.dumps(result, indent=2))
+    project_path(cfg["reports"]["metrics_file"]).write_text(json.dumps(result, indent=2), newline="\n")
     logger.info("Test metrics: %s | baseline: %s", model_metrics, baseline_metrics)
 
     if not passed:
