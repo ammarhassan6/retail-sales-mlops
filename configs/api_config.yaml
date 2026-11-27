@@ -1,0 +1,16 @@
+# ------------------------------------------------------------------
+# Settings for the Flask REST API (src/api/app.py)
+# Model / metadata / metrics paths are NOT repeated here: the API reads
+# them from pipeline_config.yaml, so there is one source of truth.
+# ------------------------------------------------------------------
+
+host: 127.0.0.1            # local only; inside Docker we will bind to 0.0.0.0
+port: 8000                 # 5000 is already used by the MLflow UI
+
+# per store-item history features ("as of" the day after the last data day)
+stats_path: data/processed/latest_store_item_stats.parquet
+
+default_horizon_days: 7    # used when the request does not send horizon_days
+max_horizon_days: 28       # history features get stale far ahead -> refuse longer forecasts
+
+max_request_bytes: 10000   # reject huge request bodies (simple protection against abuse)
