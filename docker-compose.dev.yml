@@ -1,0 +1,19 @@
+# ------------------------------------------------------------------
+# DEVELOPMENT overrides - only the settings that differ from docker-compose.yml.
+# Use:  docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Differences from production:
+#   * APP_ENV=development and more detailed logs (DEBUG)
+#   * our src/ folder is mounted into the container and gunicorn --reload
+#     restarts the app when a file changes -> no rebuild while coding
+#   * 1 worker is enough on a laptop
+# ------------------------------------------------------------------
+
+services:
+  api:
+    environment:
+      APP_ENV: development
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./src:/app/src:ro                    # read-only: the container cannot change our code
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--reload", "src.api.wsgi:app"]

@@ -1,0 +1,36 @@
+# Files Docker must NOT send to the build ("build context").
+# Smaller/faster builds, and secrets or private files can never end up in an image.
+
+# Secrets and private notes
+.env
+.env.*
+.dvc/config.local
+CLAUDE.md
+.claude/
+_private/
+
+# Version control and caches (large, not needed to run the API)
+.git/
+.dvc/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Training data - the image only needs the small stats file below
+data/raw/
+data/interim/
+data/processed/*
+!data/processed/latest_store_item_stats.parquet
+
+# MLflow local runs
+mlruns/
+mlflow.db
+mlartifacts/
+
+# Not needed at runtime
+tests/
+docs/
+*.md
