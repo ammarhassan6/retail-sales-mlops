@@ -1,0 +1,53 @@
+# ------------------------------------------------------------------
+# Docker Compose = start several containers together with one command.
+#
+# Production-like (default):  docker compose up -d --build
+# Development (see docker-compose.dev.yml):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Stop everything:            docker compose down
+#
+# Secrets: never written here. A service that needs one reads it from the
+# git-ignored .env file with `env_file:` (see .env.example).
+# ------------------------------------------------------------------
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}   # set in the shell before building
+    image: retail-sales-api:latest
+    container_name: retail-api
+    ports:
+      - "8000:8000"                          # laptop port : container port
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: INFO
+    restart: unless-stopped                  # restart automatically if it crashes
+
+  mlflow:
+    # MLflow UI to browse experiments/models (same version as requirements.txt)
+    image: ghcr.io/mlflow/mlflow:v2.22.0
+    container_name: retail-mlflow
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow                  # runs survive `docker compose down`
+    restart: unless-stopped
+
+  # ---- Monitoring (Phase 10, added later) ----
+  # prometheus:
+  #   image: prom/prometheus
+  #   ports: ["9090:9090"]
+  # grafana:
+  #   image: grafana/grafana
+  #   ports: ["3000:3000"]
+  #   env_file: .env                         # admin password comes from .env, never from this file
+
+volumes:
+  mlflow-data:
