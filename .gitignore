@@ -2,6 +2,7 @@
 CLAUDE.md
 .claude/
 _private/
+MLOps_Course_Project_Requirements.pdf
 
 # ---------- Python ----------
 __pycache__/
@@ -23,6 +24,9 @@ venv/
 /data/interim
 /data/processed
 /models/model.joblib
+
+# ---------- Feast local stores (rebuilt by `python -m feature_store.materialize`) ----------
+feature_store/feature_repo/data/
 
 # ---------- MLflow local files ----------
 mlruns/

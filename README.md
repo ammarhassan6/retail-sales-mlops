@@ -20,7 +20,8 @@ data/interim/sales.parquet
 data/interim/validated.parquet
    │  3. preprocessing  src/features/preprocessing.py (calendar + rolling-history features, time-based split)
    ▼
-data/processed/{train,val,test}.parquet + latest_store_item_stats.parquet
+data/processed/{train,val,test}.parquet + latest_store_item_stats.parquet + store_item_features.parquet
+   │  3b. feature store feature_store/materialize.py   (Feast: register features, fill online store, verify)
    │  4. training       src/models/train.py           (grid search over 3 model types, every run tracked in MLflow)
    ▼
 models/model.joblib + models/metadata.json
@@ -64,6 +65,7 @@ src/data/       ingestion, validation, sample data generator
 src/features/   feature engineering (shared by training and serving)
 src/models/     training, tuning, evaluation, metrics, MLflow helpers
 src/inventory/  reorder-point / safety-stock optimizer
+feature_store/  Feast feature repo (entities, feature views) - see feature_store/README.md
 tests/          pytest suite (runs on small generated data)
 dvc.yaml        DVC pipeline definition
 ```

@@ -45,8 +45,8 @@ stages:
       size: 1749294
     - path: src/features/preprocessing.py
       hash: md5
-      md5: 4546ae4b2083aa871107af85080f9e48
-      size: 4917
+      md5: a6aa3c877de4419a108d623803e1c352
+      size: 5993
     params:
       configs/pipeline_config.yaml:
         split:
@@ -57,6 +57,10 @@ stages:
       hash: md5
       md5: 3f5f13c32e9cab13266258fe2ffef6ab
       size: 13535
+    - path: data/processed/store_item_features.parquet
+      hash: md5
+      md5: 37554d8ed0f9dcf996beef3f604e236a
+      size: 11353674
     - path: data/processed/test.parquet
       hash: md5
       md5: 179c2054dda56c2dccfe7d1acef0bddd
@@ -82,8 +86,8 @@ stages:
       size: 648737
     - path: src/models/train.py
       hash: md5
-      md5: f714bdd562b9f003d4fc2b1fc5b1fede
-      size: 3995
+      md5: 704af94403c4d7d02fa48241c1273466
+      size: 4193
     - path: src/models/tune.py
       hash: md5
       md5: a0b1cec1159e130a773f7fb14eab4d6e
@@ -116,7 +120,7 @@ stages:
     outs:
     - path: models/metadata.json
       hash: md5
-      md5: c48a5922d5d9f98f7fed4cd77947a21a
+      md5: ea1c61928cb5b921886f0215c3d2aef3
       size: 643
     - path: models/model.joblib
       hash: md5
@@ -151,3 +155,31 @@ stages:
       hash: md5
       md5: 6f13a602742c02717a1641963b83cfc7
       size: 72174
+  feature_store:
+    cmd: python -m feature_store.materialize
+    deps:
+    - path: data/processed/latest_store_item_stats.parquet
+      hash: md5
+      md5: 3f5f13c32e9cab13266258fe2ffef6ab
+      size: 13535
+    - path: data/processed/store_item_features.parquet
+      hash: md5
+      md5: 37554d8ed0f9dcf996beef3f604e236a
+      size: 11353674
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 179c2054dda56c2dccfe7d1acef0bddd
+      size: 640218
+    - path: feature_store/client.py
+      hash: md5
+      md5: ff8414bc8176c457860c4e4689be69ae
+      size: 1963
+    - path: feature_store/feature_repo
+      hash: md5
+      md5: 0f23d48dcf4e308ce75cf38bc29040ed.dir
+      size: 473026
+      nfiles: 9
+    - path: feature_store/materialize.py
+      hash: md5
+      md5: 61ced98d8d96f66a82e5b071b25fecd4
+      size: 3792

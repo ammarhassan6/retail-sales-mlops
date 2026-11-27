@@ -8,3 +8,5 @@ sqlalchemy==2.0.40   # mlflow 2.22 breaks with SQLAlchemy 2.1+, so we pin it
 matplotlib==3.10.1
 boto3==1.38.8
 python-dotenv==1.2.4   # loads secrets from a local .env file (never committed)
+feast==0.68.0         # feature store (offline Parquet + online SQLite)
+pathspec==0.12.1      # feast would pull pathspec 1.x, which crashes dvc 3.59 - so we pin it here

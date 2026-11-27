@@ -87,6 +87,24 @@ def latest_store_item_stats(sales: pd.DataFrame) -> pd.DataFrame:
     return snapshot.reset_index(drop=True)
 
 
+def build_feature_store_table(sales: pd.DataFrame) -> pd.DataFrame:
+    """Source table for the Feast feature store (offline store).
+
+    One row per store-item-day with the history features "as of" that day,
+    PLUS one extra row per store-item for the day after the last data day
+    (that newest row is what the online store will serve to the API).
+    Feast needs a timezone-aware timestamp column -> event_timestamp (UTC).
+    """
+    next_day = sales["date"].max() + pd.Timedelta(days=1)
+    future_rows = sales[["store", "item"]].drop_duplicates().assign(date=next_day, sales=float("nan"))
+    with_history = add_history_features(pd.concat([sales, future_rows], ignore_index=True))
+
+    table = with_history.dropna(subset=HISTORY_COLUMNS)
+    table = table[["store", "item", "date"] + HISTORY_COLUMNS].rename(columns={"date": "event_timestamp"})
+    table["event_timestamp"] = table["event_timestamp"].dt.tz_localize("UTC")
+    return table.reset_index(drop=True)
+
+
 def build_inference_frame(requests: pd.DataFrame, stats: pd.DataFrame) -> pd.DataFrame:
     """Used by the API: requests has columns [store, item, date].
     Joins the latest history stats and adds calendar features."""
@@ -109,6 +127,7 @@ def main() -> None:
     val.to_parquet(out_dir / "val.parquet", index=False)
     test.to_parquet(out_dir / "test.parquet", index=False)
     latest_store_item_stats(sales).to_parquet(out_dir / "latest_store_item_stats.parquet", index=False)
+    build_feature_store_table(sales).to_parquet(out_dir / "store_item_features.parquet", index=False)
 
     logger.info("Features built: train=%d, val=%d, test=%d rows", len(train), len(val), len(test))
 

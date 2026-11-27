@@ -24,7 +24,7 @@ from src.models.mlflow_utils import setup_mlflow
 from src.models.tune import build_model, param_combinations
 from src.utils.config import load_config, project_path
 from src.utils.logger import get_logger
-from src.utils.versioning import file_md5, git_commit
+from src.utils.versioning import file_md5, git_commit, last_commit_for
 
 logger = get_logger(__name__)
 
@@ -43,6 +43,7 @@ def main() -> None:
     # Versions recorded with every run -> any model can be traced back to its code + data
     data_version = file_md5(project_path(cfg["data"]["raw_path"]))
     code_version = git_commit()
+    feature_repo_version = last_commit_for("feature_store/feature_repo")  # Feast definitions version
 
     setup_mlflow(cfg)
     best = None
@@ -60,7 +61,8 @@ def main() -> None:
                 metrics = regression_metrics(y_val, preds)
 
                 mlflow.set_tags({"model_type": model_type, "git_commit": code_version,
-                                 "data_version_md5": data_version})
+                                 "data_version_md5": data_version,
+                                 "feature_repo_version": feature_repo_version})
                 mlflow.log_params({"model_type": model_type, **params,
                                    "n_train_rows": len(train), "features": ",".join(FEATURE_COLUMNS)})
                 mlflow.log_metrics({f"val_{k}": v for k, v in metrics.items()})
