@@ -116,11 +116,11 @@ stages:
     outs:
     - path: models/metadata.json
       hash: md5
-      md5: a0201a45289e839f8463a5c38a57466f
+      md5: f9162bbf50fc1eb93b778932b6a91f38
       size: 672
     - path: models/model.joblib
       hash: md5
-      md5: 839f0c2495c5133ccc1bffb826db3b3b
+      md5: e513ed71bc8aa65e443932ee1f898b70
       size: 1392712
   evaluate:
     cmd: python -m src.models.evaluate
@@ -131,7 +131,7 @@ stages:
       size: 640218
     - path: models/model.joblib
       hash: md5
-      md5: 839f0c2495c5133ccc1bffb826db3b3b
+      md5: e513ed71bc8aa65e443932ee1f898b70
       size: 1392712
     - path: src/models/evaluate.py
       hash: md5
@@ -145,8 +145,8 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 5b5666bddcbdc3222bd7fa288d3c39ce
-      size: 369
+      md5: 02d00a5d28e8a19b92a2c5c4760542d6
+      size: 371
     - path: reports/pred_vs_actual.png
       hash: md5
       md5: 6f13a602742c02717a1641963b83cfc7
