@@ -5,48 +5,48 @@ stages:
     deps:
     - path: data/raw/train.csv
       hash: md5
-      md5: 9566c3963451137c2d7733f39fedb397
-      size: 17333449
+      md5: 10b8d25d43bd473c7de4eafac751e681
+      size: 10965971
     - path: src/data/ingestion.py
       hash: md5
-      md5: 40b2ec6be656513aed28b5643f3787f9
-      size: 1843
+      md5: 1ad38749b27f26ac88cea89f7f2fe3ad
+      size: 1898
     outs:
     - path: data/interim/sales.parquet
       hash: md5
-      md5: de3cc1866baa96f3e4ff4d344e87e5f2
-      size: 1749294
+      md5: 1328be7837bfe1b5b3f43327b77595e5
+      size: 630764
   validate:
     cmd: python -m src.data.validation
     deps:
     - path: data/interim/sales.parquet
       hash: md5
-      md5: de3cc1866baa96f3e4ff4d344e87e5f2
-      size: 1749294
+      md5: 1328be7837bfe1b5b3f43327b77595e5
+      size: 630764
     - path: src/data/validation.py
       hash: md5
-      md5: 3d34f180787e64f0bc94663eb4b86683
-      size: 2478
+      md5: 3268455fd726c28246b59ce9c85a4bf2
+      size: 2552
     outs:
     - path: data/interim/validated.parquet
       hash: md5
-      md5: de3cc1866baa96f3e4ff4d344e87e5f2
-      size: 1749294
+      md5: 1328be7837bfe1b5b3f43327b77595e5
+      size: 630764
     - path: reports/validation_report.json
       hash: md5
-      md5: 52e2ad9a07fe8415a74689b7bbb3a496
+      md5: e28e9b0c2cc181586ba1fcd6e55ccbe3
       size: 197
   preprocess:
     cmd: python -m src.features.preprocessing
     deps:
     - path: data/interim/validated.parquet
       hash: md5
-      md5: de3cc1866baa96f3e4ff4d344e87e5f2
-      size: 1749294
+      md5: 1328be7837bfe1b5b3f43327b77595e5
+      size: 630764
     - path: src/features/preprocessing.py
       hash: md5
-      md5: 4546ae4b2083aa871107af85080f9e48
-      size: 4917
+      md5: e0d72f2d51ce710a9be5a0c5beaea980
+      size: 5034
     params:
       configs/pipeline_config.yaml:
         split:
@@ -55,39 +55,39 @@ stages:
     outs:
     - path: data/processed/latest_store_item_stats.parquet
       hash: md5
-      md5: 3f5f13c32e9cab13266258fe2ffef6ab
+      md5: e9bba0708b0d0f1796c07ca995799856
       size: 13535
     - path: data/processed/test.parquet
       hash: md5
-      md5: 179c2054dda56c2dccfe7d1acef0bddd
-      size: 640218
+      md5: 04f80b3aa9cf2977d4667442eca945fd
+      size: 639874
     - path: data/processed/train.parquet
       hash: md5
-      md5: e47b2db5dd7c75a5fc9aa035e160aef7
-      size: 10537472
+      md5: 04814dab11dc27e8bfa065f903b53591
+      size: 5655954
     - path: data/processed/val.parquet
       hash: md5
-      md5: 10740c9c92653e598c93347e32d05522
-      size: 648737
+      md5: 51d338c44117f22000566329610dc834
+      size: 648369
   train:
     cmd: python -m src.models.train
     deps:
     - path: data/processed/train.parquet
       hash: md5
-      md5: e47b2db5dd7c75a5fc9aa035e160aef7
-      size: 10537472
+      md5: 04814dab11dc27e8bfa065f903b53591
+      size: 5655954
     - path: data/processed/val.parquet
       hash: md5
-      md5: 10740c9c92653e598c93347e32d05522
-      size: 648737
+      md5: 51d338c44117f22000566329610dc834
+      size: 648369
     - path: src/models/train.py
       hash: md5
-      md5: bde69fe88d91848a40f18e9b44a43589
-      size: 3981
+      md5: 14a658efeb8d541ddcbc7371cd6378d7
+      size: 4081
     - path: src/models/tune.py
       hash: md5
-      md5: a0b1cec1159e130a773f7fb14eab4d6e
-      size: 1096
+      md5: 59cc72215d4b986f270f13b2d9ee57b0
+      size: 1124
     params:
       configs/model_params.yaml:
         models:
@@ -116,27 +116,27 @@ stages:
     outs:
     - path: models/metadata.json
       hash: md5
-      md5: f9162bbf50fc1eb93b778932b6a91f38
+      md5: 2e9775b58821a492d4b4a31559f04075
       size: 672
     - path: models/model.joblib
       hash: md5
-      md5: e513ed71bc8aa65e443932ee1f898b70
-      size: 1392712
+      md5: e0f4b1d7442bfa288878f9d5a7c938ac
+      size: 1305912
   evaluate:
     cmd: python -m src.models.evaluate
     deps:
     - path: data/processed/test.parquet
       hash: md5
-      md5: 179c2054dda56c2dccfe7d1acef0bddd
-      size: 640218
+      md5: 04f80b3aa9cf2977d4667442eca945fd
+      size: 639874
     - path: models/model.joblib
       hash: md5
-      md5: e513ed71bc8aa65e443932ee1f898b70
-      size: 1392712
+      md5: e0f4b1d7442bfa288878f9d5a7c938ac
+      size: 1305912
     - path: src/models/evaluate.py
       hash: md5
-      md5: 0d1db29e0c1835dac4e981d7339d48f7
-      size: 4273
+      md5: 3747a329229161f02ef56d1b59bc576e
+      size: 4376
     params:
       configs/pipeline_config.yaml:
         quality_gate:
@@ -145,9 +145,9 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 02d00a5d28e8a19b92a2c5c4760542d6
-      size: 371
+      md5: ec77d094c6e681183d1516cd2d133ea3
+      size: 372
     - path: reports/pred_vs_actual.png
       hash: md5
-      md5: 6f13a602742c02717a1641963b83cfc7
-      size: 72174
+      md5: a0926f43ba6e0da4025e75090e90df88
+      size: 72521

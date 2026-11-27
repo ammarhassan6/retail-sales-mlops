@@ -1,9 +1,9 @@
 {
   "model_type": "hist_gradient_boosting",
   "test": {
-    "mae": 5.899081571684204,
-    "rmse": 7.636393694004014,
-    "smape": 12.43078358037967
+    "mae": 5.921852307415084,
+    "rmse": 7.663240418704074,
+    "smape": 12.477832425225307
   },
   "baseline_test": {
     "mae": 8.64231111111111,
@@ -12,5 +12,5 @@
   },
   "quality_gate_passed": true,
   "failure_reasons": [],
-  "registered_version": "1"
+  "registered_version": "2"
 }
