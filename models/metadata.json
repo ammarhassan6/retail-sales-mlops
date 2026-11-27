@@ -1,0 +1,30 @@
+{
+  "model_type": "hist_gradient_boosting",
+  "params": {
+    "max_iter": 400,
+    "learning_rate": 0.1,
+    "max_depth": 8
+  },
+  "val_metrics": {
+    "mae": 6.525729071771047,
+    "rmse": 8.472795893725628,
+    "smape": 11.072252797226234
+  },
+  "mlflow_run_id": "2d3f54bf4a7c40a398d2410e028fd392",
+  "feature_columns": [
+    "store",
+    "item",
+    "dayofweek",
+    "month",
+    "year",
+    "dayofmonth",
+    "weekofyear",
+    "is_weekend",
+    "sales_mean_7d",
+    "sales_mean_28d",
+    "sales_std_28d"
+  ],
+  "data_version_md5": "9566c3963451137c2d7733f39fedb397",
+  "git_commit": "8dd2216",
+  "trained_at": "2026-11-26T06:01:55+00:00"
+}

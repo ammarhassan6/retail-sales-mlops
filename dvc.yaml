@@ -1,0 +1,67 @@
+# DVC pipeline: `dvc repro` runs only the stages whose inputs (deps/params) changed.
+# Each stage = one Python module. Outputs (outs) are cached and versioned by DVC.
+
+stages:
+  ingest:
+    cmd: python -m src.data.ingestion
+    deps:
+      - src/data/ingestion.py
+      - data/raw/train.csv
+    outs:
+      - data/interim/sales.parquet
+
+  validate:
+    cmd: python -m src.data.validation
+    deps:
+      - src/data/validation.py
+      - data/interim/sales.parquet
+    outs:
+      - data/interim/validated.parquet
+    metrics:
+      - reports/validation_report.json:
+          cache: false
+
+  preprocess:
+    cmd: python -m src.features.preprocessing
+    deps:
+      - src/features/preprocessing.py
+      - data/interim/validated.parquet
+    params:
+      - configs/pipeline_config.yaml:
+          - split
+    outs:
+      - data/processed/train.parquet
+      - data/processed/val.parquet
+      - data/processed/test.parquet
+      - data/processed/latest_store_item_stats.parquet
+
+  train:
+    cmd: python -m src.models.train
+    deps:
+      - src/models/train.py
+      - src/models/tune.py
+      - data/processed/train.parquet
+      - data/processed/val.parquet
+    params:
+      - configs/model_params.yaml:
+          - models
+    outs:
+      - models/model.joblib
+      - models/metadata.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m src.models.evaluate
+    deps:
+      - src/models/evaluate.py
+      - models/model.joblib
+      - data/processed/test.parquet
+    params:
+      - configs/pipeline_config.yaml:
+          - quality_gate
+    metrics:
+      - reports/metrics.json:
+          cache: false
+    plots:
+      - reports/pred_vs_actual.png:
+          cache: false

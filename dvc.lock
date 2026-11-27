@@ -1,0 +1,153 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m src.data.ingestion
+    deps:
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 9566c3963451137c2d7733f39fedb397
+      size: 17333449
+    - path: src/data/ingestion.py
+      hash: md5
+      md5: 40b2ec6be656513aed28b5643f3787f9
+      size: 1843
+    outs:
+    - path: data/interim/sales.parquet
+      hash: md5
+      md5: de3cc1866baa96f3e4ff4d344e87e5f2
+      size: 1749294
+  validate:
+    cmd: python -m src.data.validation
+    deps:
+    - path: data/interim/sales.parquet
+      hash: md5
+      md5: de3cc1866baa96f3e4ff4d344e87e5f2
+      size: 1749294
+    - path: src/data/validation.py
+      hash: md5
+      md5: 3d34f180787e64f0bc94663eb4b86683
+      size: 2478
+    outs:
+    - path: data/interim/validated.parquet
+      hash: md5
+      md5: de3cc1866baa96f3e4ff4d344e87e5f2
+      size: 1749294
+    - path: reports/validation_report.json
+      hash: md5
+      md5: 52e2ad9a07fe8415a74689b7bbb3a496
+      size: 197
+  preprocess:
+    cmd: python -m src.features.preprocessing
+    deps:
+    - path: data/interim/validated.parquet
+      hash: md5
+      md5: de3cc1866baa96f3e4ff4d344e87e5f2
+      size: 1749294
+    - path: src/features/preprocessing.py
+      hash: md5
+      md5: 4546ae4b2083aa871107af85080f9e48
+      size: 4917
+    params:
+      configs/pipeline_config.yaml:
+        split:
+          test_days: 90
+          val_days: 90
+    outs:
+    - path: data/processed/latest_store_item_stats.parquet
+      hash: md5
+      md5: 3f5f13c32e9cab13266258fe2ffef6ab
+      size: 13535
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 179c2054dda56c2dccfe7d1acef0bddd
+      size: 640218
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: e47b2db5dd7c75a5fc9aa035e160aef7
+      size: 10537472
+    - path: data/processed/val.parquet
+      hash: md5
+      md5: 10740c9c92653e598c93347e32d05522
+      size: 648737
+  train:
+    cmd: python -m src.models.train
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: e47b2db5dd7c75a5fc9aa035e160aef7
+      size: 10537472
+    - path: data/processed/val.parquet
+      hash: md5
+      md5: 10740c9c92653e598c93347e32d05522
+      size: 648737
+    - path: src/models/train.py
+      hash: md5
+      md5: bde69fe88d91848a40f18e9b44a43589
+      size: 3981
+    - path: src/models/tune.py
+      hash: md5
+      md5: a0b1cec1159e130a773f7fb14eab4d6e
+      size: 1096
+    params:
+      configs/model_params.yaml:
+        models:
+          ridge:
+            alpha:
+            - 1.0
+            - 10.0
+          random_forest:
+            n_estimators:
+            - 50
+            max_depth:
+            - 12
+            max_samples:
+            - 0.3
+            n_jobs:
+            - -1
+          hist_gradient_boosting:
+            max_iter:
+            - 200
+            - 400
+            learning_rate:
+            - 0.05
+            - 0.1
+            max_depth:
+            - 8
+    outs:
+    - path: models/metadata.json
+      hash: md5
+      md5: a0201a45289e839f8463a5c38a57466f
+      size: 672
+    - path: models/model.joblib
+      hash: md5
+      md5: 839f0c2495c5133ccc1bffb826db3b3b
+      size: 1392712
+  evaluate:
+    cmd: python -m src.models.evaluate
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 179c2054dda56c2dccfe7d1acef0bddd
+      size: 640218
+    - path: models/model.joblib
+      hash: md5
+      md5: 839f0c2495c5133ccc1bffb826db3b3b
+      size: 1392712
+    - path: src/models/evaluate.py
+      hash: md5
+      md5: 0d1db29e0c1835dac4e981d7339d48f7
+      size: 4273
+    params:
+      configs/pipeline_config.yaml:
+        quality_gate:
+          max_smape: 20.0
+          must_beat_baseline: true
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 5b5666bddcbdc3222bd7fa288d3c39ce
+      size: 369
+    - path: reports/pred_vs_actual.png
+      hash: md5
+      md5: 6f13a602742c02717a1641963b83cfc7
+      size: 72174
