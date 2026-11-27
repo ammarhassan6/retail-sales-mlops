@@ -12,3 +12,5 @@ matplotlib==3.10.1
 boto3==1.38.8
 python-dotenv==1.2.4   # loads secrets from a local .env file (never committed)
 flask==3.1.3          # web framework for the REST API
+feast==0.68.0         # feature store (offline Parquet + online SQLite)
+pathspec==0.12.1      # feast would pull pathspec 1.x, which crashes dvc 3.59 - so we pin it here

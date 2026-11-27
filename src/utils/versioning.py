@@ -26,6 +26,19 @@ def git_commit() -> str:
         return "unknown"
 
 
+def last_commit_for(path: str) -> str:
+    """Commit id of the last change to a folder, e.g. the Feast feature repo
+    ("which version of the feature definitions was used?")."""
+    try:
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%h", "--", path],
+            capture_output=True, text=True, check=True,
+        )
+        return result.stdout.strip() or "uncommitted"
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "unknown"
+
+
 def file_md5(path: str | Path) -> str:
     md5 = hashlib.md5()
     with open(path, "rb") as f:

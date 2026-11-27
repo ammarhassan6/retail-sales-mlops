@@ -1,0 +1,14 @@
+# Feast configuration (local development setup)
+# - registry:      a small file that stores our feature DEFINITIONS (created by `apply`)
+# - online_store:  SQLite file with only the LATEST feature values -> fast lookups for the API
+# - offline_store: "file" = Parquet files on disk with the FULL feature history -> training data
+# Production choice would be e.g. S3 (offline) + Redis/DynamoDB (online); see feature_store/README.md
+project: retail_sales
+registry: data/registry.db
+provider: local
+online_store:
+  type: sqlite
+  path: data/online_store.db
+offline_store:
+  type: file
+entity_key_serialization_version: 3

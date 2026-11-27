@@ -34,6 +34,18 @@ stages:
       - data/processed/val.parquet
       - data/processed/test.parquet
       - data/processed/latest_store_item_stats.parquet
+      - data/processed/store_item_features.parquet
+
+  feature_store:
+    # Register features in Feast, fill the online store, verify offline/online values
+    cmd: python -m feature_store.materialize
+    deps:
+      - feature_store/client.py
+      - feature_store/materialize.py
+      - feature_store/feature_repo
+      - data/processed/store_item_features.parquet
+      - data/processed/latest_store_item_stats.parquet
+      - data/processed/test.parquet
 
   train:
     cmd: python -m src.models.train
