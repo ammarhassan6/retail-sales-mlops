@@ -17,10 +17,9 @@ venv/
 *credentials*
 
 # ---------- Data & models (tracked by DVC, not Git) ----------
-/data/raw/*
-!/data/raw/.gitkeep
-!/data/raw/*.dvc
-!/data/raw/.gitignore
+# Only ignore the data FILES. "/data/raw/*" made DVC treat the whole folder as
+# ignored, so it never saw train.csv.dvc and `dvc pull` skipped the dataset.
+/data/raw/*.csv
 /data/interim
 /data/processed
 /models/model.joblib
