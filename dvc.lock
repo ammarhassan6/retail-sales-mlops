@@ -7,12 +7,10 @@ stages:
       hash: md5
       md5: 9566c3963451137c2d7733f39fedb397
       size: 17333449
-      isexec: true
     - path: src/data/ingestion.py
       hash: md5
       md5: 40b2ec6be656513aed28b5643f3787f9
       size: 1843
-      isexec: true
     outs:
     - path: data/interim/sales.parquet
       hash: md5
@@ -29,7 +27,6 @@ stages:
       hash: md5
       md5: d57ac4ae0ea96dcc5a583325e764c956
       size: 2524
-      isexec: true
     outs:
     - path: data/interim/validated.parquet
       hash: md5
@@ -50,7 +47,6 @@ stages:
       hash: md5
       md5: a6aa3c877de4419a108d623803e1c352
       size: 5993
-      isexec: true
     params:
       configs/pipeline_config.yaml:
         split:
@@ -92,12 +88,10 @@ stages:
       hash: md5
       md5: 704af94403c4d7d02fa48241c1273466
       size: 4193
-      isexec: true
     - path: src/models/tune.py
       hash: md5
       md5: a0b1cec1159e130a773f7fb14eab4d6e
       size: 1096
-      isexec: true
     params:
       configs/model_params.yaml:
         models:
@@ -147,7 +141,6 @@ stages:
       hash: md5
       md5: 3ea792416b149cdc744bf3193f109839
       size: 4287
-      isexec: true
     params:
       configs/pipeline_config.yaml:
         quality_gate:
@@ -181,14 +174,12 @@ stages:
       hash: md5
       md5: ff8414bc8176c457860c4e4689be69ae
       size: 1963
-      isexec: true
     - path: feature_store/feature_repo
       hash: md5
-      md5: e26ac7180ce5dc98fd7df2bc0ad1f577.dir
-      size: 473050
-      nfiles: 9
+      md5: 92e2a249b397b8e9aeed3b09187584d0.dir
+      size: 3823
+      nfiles: 4
     - path: feature_store/materialize.py
       hash: md5
       md5: 61ced98d8d96f66a82e5b071b25fecd4
       size: 3792
-      isexec: true
