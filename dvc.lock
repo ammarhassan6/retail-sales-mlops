@@ -7,10 +7,12 @@ stages:
       hash: md5
       md5: 9566c3963451137c2d7733f39fedb397
       size: 17333449
+      isexec: true
     - path: src/data/ingestion.py
       hash: md5
       md5: 40b2ec6be656513aed28b5643f3787f9
       size: 1843
+      isexec: true
     outs:
     - path: data/interim/sales.parquet
       hash: md5
@@ -27,6 +29,7 @@ stages:
       hash: md5
       md5: d57ac4ae0ea96dcc5a583325e764c956
       size: 2524
+      isexec: true
     outs:
     - path: data/interim/validated.parquet
       hash: md5
@@ -47,6 +50,7 @@ stages:
       hash: md5
       md5: a6aa3c877de4419a108d623803e1c352
       size: 5993
+      isexec: true
     params:
       configs/pipeline_config.yaml:
         split:
@@ -88,10 +92,12 @@ stages:
       hash: md5
       md5: 704af94403c4d7d02fa48241c1273466
       size: 4193
+      isexec: true
     - path: src/models/tune.py
       hash: md5
       md5: a0b1cec1159e130a773f7fb14eab4d6e
       size: 1096
+      isexec: true
     params:
       configs/model_params.yaml:
         models:
@@ -120,11 +126,11 @@ stages:
     outs:
     - path: models/metadata.json
       hash: md5
-      md5: ea1c61928cb5b921886f0215c3d2aef3
+      md5: af6c169c6af99b3358a83e173d5d2254
       size: 643
     - path: models/model.joblib
       hash: md5
-      md5: e513ed71bc8aa65e443932ee1f898b70
+      md5: 52e886496e6eeef161773af880739bde
       size: 1392712
   evaluate:
     cmd: python -m src.models.evaluate
@@ -135,12 +141,13 @@ stages:
       size: 640218
     - path: models/model.joblib
       hash: md5
-      md5: e513ed71bc8aa65e443932ee1f898b70
+      md5: 52e886496e6eeef161773af880739bde
       size: 1392712
     - path: src/models/evaluate.py
       hash: md5
       md5: 3ea792416b149cdc744bf3193f109839
       size: 4287
+      isexec: true
     params:
       configs/pipeline_config.yaml:
         quality_gate:
@@ -149,12 +156,12 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 5b4b1827f8d921a2daefac4211f59d08
+      md5: 3fcce4d46bf7765d71948dff28e018f4
       size: 356
     - path: reports/pred_vs_actual.png
       hash: md5
-      md5: 6f13a602742c02717a1641963b83cfc7
-      size: 72174
+      md5: fd49ae4ac7f54d49450da0e56c7189a7
+      size: 77579
   feature_store:
     cmd: python -m feature_store.materialize
     deps:
@@ -174,12 +181,14 @@ stages:
       hash: md5
       md5: ff8414bc8176c457860c4e4689be69ae
       size: 1963
+      isexec: true
     - path: feature_store/feature_repo
       hash: md5
-      md5: 0f23d48dcf4e308ce75cf38bc29040ed.dir
-      size: 473026
+      md5: e26ac7180ce5dc98fd7df2bc0ad1f577.dir
+      size: 473050
       nfiles: 9
     - path: feature_store/materialize.py
       hash: md5
       md5: 61ced98d8d96f66a82e5b071b25fecd4
       size: 3792
+      isexec: true
