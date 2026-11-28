@@ -10,7 +10,7 @@
     "rmse": 8.472795893725628,
     "smape": 11.072252797226234
   },
-  "mlflow_run_id": "f129a0b06f8f4ef9976b94da97d2c3f0",
+  "mlflow_run_id": "85a4542cd5044fbebcdcd9d54d437268",
   "feature_columns": [
     "store",
     "item",
@@ -25,6 +25,6 @@
     "sales_std_28d"
   ],
   "data_version_md5": "9566c3963451137c2d7733f39fedb397",
-  "git_commit": "aecfc5d",
-  "trained_at": "2026-11-27T19:48:19+00:00"
+  "git_commit": "bbd63ed",
+  "trained_at": "2026-11-28T15:58:47+00:00"
 }

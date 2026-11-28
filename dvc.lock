@@ -120,11 +120,11 @@ stages:
     outs:
     - path: models/metadata.json
       hash: md5
-      md5: ea1c61928cb5b921886f0215c3d2aef3
+      md5: af6c169c6af99b3358a83e173d5d2254
       size: 643
     - path: models/model.joblib
       hash: md5
-      md5: e513ed71bc8aa65e443932ee1f898b70
+      md5: 52e886496e6eeef161773af880739bde
       size: 1392712
   evaluate:
     cmd: python -m src.models.evaluate
@@ -135,7 +135,7 @@ stages:
       size: 640218
     - path: models/model.joblib
       hash: md5
-      md5: e513ed71bc8aa65e443932ee1f898b70
+      md5: 52e886496e6eeef161773af880739bde
       size: 1392712
     - path: src/models/evaluate.py
       hash: md5
@@ -149,12 +149,12 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 5b4b1827f8d921a2daefac4211f59d08
+      md5: 3fcce4d46bf7765d71948dff28e018f4
       size: 356
     - path: reports/pred_vs_actual.png
       hash: md5
-      md5: 6f13a602742c02717a1641963b83cfc7
-      size: 72174
+      md5: fd49ae4ac7f54d49450da0e56c7189a7
+      size: 77579
   feature_store:
     cmd: python -m feature_store.materialize
     deps:
