@@ -28,6 +28,9 @@ venv/
 # ---------- Feast local stores (rebuilt by `python -m feature_store.materialize`) ----------
 feature_store/feature_repo/data/
 
+# ---------- Airflow (local run) ----------
+pipelines/airflow/logs/
+
 # ---------- MLflow local files ----------
 mlruns/
 mlflow.db

@@ -1,3 +1,9 @@
 # Add patterns of files dvc should ignore, which could improve
 # the performance. Learn more at
 # https://dvc.org/doc/user-guide/dvcignore
+
+# Feast writes its local stores (registry.db, online_store.db) INTO the feature repo folder,
+# and Python writes __pycache__. Neither is a real input of the pipeline, so DVC must not
+# count them - otherwise the feature_store stage (and training) looks "changed" after every run.
+feature_store/feature_repo/data/
+__pycache__/
