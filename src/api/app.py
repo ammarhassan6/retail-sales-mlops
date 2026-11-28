@@ -7,7 +7,8 @@ Endpoints:
 
 The API only READS files made by the ML pipeline (paths come from configs/*.yaml):
   models/model.joblib, models/metadata.json, reports/metrics.json,
-  data/processed/latest_store_item_stats.parquet
+  data/processed/latest_store_item_stats.parquet (fallback for the Feast online store)
+History features come from the Feast online store when it is available.
 Features are built with the SAME function as training (build_inference_frame),
 so there is no training-serving skew.
 
@@ -23,7 +24,7 @@ from flask import Flask, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 from src.api.validation import validate_predict_request
-from src.features.preprocessing import FEATURE_COLUMNS, build_inference_frame
+from src.features.preprocessing import FEATURE_COLUMNS, HISTORY_COLUMNS, build_inference_frame
 from src.inventory.optimizer import recommend_order
 from src.utils.config import load_config, project_path
 from src.utils.logger import get_logger
@@ -56,7 +57,30 @@ def load_artifacts() -> dict | None:
         "stats": pd.read_parquet(stats_path),
         "metadata": json.loads(metadata_path.read_text()),
         "metrics": json.loads(metrics_path.read_text()),
+        "feast_store": open_feast_store() if api_cfg.get("use_feast", True) else None,
     }
+
+
+def open_feast_store():
+    """Connect to the Feast ONLINE store, or return None so the API uses the parquet snapshot.
+
+    None when: feast is not installed (slim Docker image), the feature_store folder is
+    not there, or the online store was never built (`python -m feature_store.materialize`).
+    """
+    try:
+        from feature_store.client import REPO_PATH, get_store
+    except ImportError:
+        logger.info("Feast not installed -> history features come from the parquet snapshot")
+        return None
+    if not (REPO_PATH / "data" / "online_store.db").exists():
+        logger.info("Feast online store not built -> history features come from the parquet snapshot")
+        return None
+    logger.info("History features come from the Feast online store")
+    return get_store()
+
+
+def feature_source(artifacts: dict) -> str:
+    return "feast_online" if artifacts.get("feast_store") is not None else "parquet_snapshot"
 
 
 def error_response(message: str, status_code: int):
@@ -72,11 +96,22 @@ def model_version(artifacts: dict) -> str:
 def get_history_features(artifacts: dict, store: int, item: int) -> pd.DataFrame:
     """History features (sales_mean_7d, sales_mean_28d, sales_std_28d) for ONE store-item.
 
-    This is the ONLY place the API looks up history features. Later it will read
-    them from the Feast online store and fall back to the parquet snapshot if
-    Feast is not available - nothing else in the API has to change.
+    This is the ONLY place the API looks up history features:
+      1. the Feast ONLINE store (if available) - the feature store's low-latency path
+      2. otherwise / if Feast fails: the parquet snapshot made by the same pipeline
+    Both hold identical values (checked by feature_store/materialize.py).
     Returns an empty table when the store-item is unknown.
     """
+    feast_store = artifacts.get("feast_store")
+    if feast_store is not None:
+        try:
+            from feature_store.client import get_online_history_features
+            pairs = pd.DataFrame({"store": [store], "item": [item]})
+            online = get_online_history_features(feast_store, pairs)
+            return online.dropna(subset=HISTORY_COLUMNS)  # unknown store-item -> NaN -> empty
+        except Exception:
+            logger.exception("Feast online lookup failed -> using the parquet snapshot")
+
     stats = artifacts["stats"]
     match = (stats["store"] == store) & (stats["item"] == item)
     return stats[match]
@@ -100,6 +135,7 @@ def build_model_info(artifacts: dict) -> dict:
         "data_version_md5": metadata.get("data_version_md5"),
         "mlflow_run_id": metadata.get("mlflow_run_id"),
         "history_as_of_date": str(pd.Timestamp(stats["as_of_date"].max()).date()),
+        "feature_source": feature_source(artifacts),
         "store_item_count": len(stats),
     }
 
