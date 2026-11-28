@@ -40,7 +40,9 @@ def last_commit_for(path: str) -> str:
 
 
 def file_md5(path: str | Path) -> str:
-    md5 = hashlib.md5()
+    # MD5 is used as a data FINGERPRINT (same hash as DVC), not for security
+    # (passwords/signatures) - usedforsecurity=False says so explicitly (bandit B324).
+    md5 = hashlib.md5(usedforsecurity=False)
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             md5.update(chunk)
