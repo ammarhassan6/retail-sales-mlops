@@ -10,6 +10,10 @@ port: 8000                 # 5000 is already used by the MLflow UI
 # per store-item history features ("as of" the day after the last data day)
 stats_path: data/processed/latest_store_item_stats.parquet
 
+# Read history features from the Feast online store when it is available
+# (falls back to stats_path when Feast is not installed / not materialized)
+use_feast: true
+
 default_horizon_days: 7    # used when the request does not send horizon_days
 max_horizon_days: 28       # history features get stale far ahead -> refuse longer forecasts
 
