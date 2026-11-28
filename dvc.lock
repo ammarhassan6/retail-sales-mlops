@@ -176,9 +176,9 @@ stages:
       size: 1963
     - path: feature_store/feature_repo
       hash: md5
-      md5: 0f23d48dcf4e308ce75cf38bc29040ed.dir
-      size: 473026
-      nfiles: 9
+      md5: 92e2a249b397b8e9aeed3b09187584d0.dir
+      size: 3823
+      nfiles: 4
     - path: feature_store/materialize.py
       hash: md5
       md5: 61ced98d8d96f66a82e5b071b25fecd4
